@@ -1011,24 +1011,20 @@ async function loadDB() {
       if (raw) applyDBData(JSON.parse(raw));
     }
   } catch(e) { console.warn('loadDB:', e); }
-  // 관리자 항상 유지
-  if (!DB.users.find(u => u.id === '뚜릴')) {
-    DB.users.unshift({id:'뚜릴',pw:'0917',nick:'관리자',name:'관리자',phone:'010-0000-0000',balance:9999999,isAdmin:true,grade:'최고관리자',joined:'2024-01-01',betTotal:0});
-    await saveDB();
-  }
+  ensureAdmin();
 }
 
 function applyDBData(d) {
-  if(d.users)     DB.users     = d.users;
-  if(d.charges)   DB.charges   = d.charges;
-  if(d.exchanges) DB.exchanges = d.exchanges;
-  if(d.posts)     DB.posts     = d.posts;
-  if(d.messages)  DB.messages  = d.messages;
-  if(d.nxtPid)    DB.nxtPid    = d.nxtPid;
-  if(d.bacHist)   DB.bacHist   = d.bacHist;
-  if(d.betLog)    DB.betLog    = d.betLog;
-  if(d.adHist)    DB.adHist    = d.adHist;
-  if(d.snHist)    DB.snHist    = d.snHist;
+  if (d.users && Array.isArray(d.users))         DB.users     = d.users;
+  if (d.charges && Array.isArray(d.charges))     DB.charges   = d.charges;
+  if (d.exchanges && Array.isArray(d.exchanges)) DB.exchanges = d.exchanges;
+  if (d.posts && Array.isArray(d.posts))         DB.posts     = d.posts;
+  if (d.messages && typeof d.messages==='object') DB.messages = d.messages;
+  if (d.nxtPid)    DB.nxtPid    = d.nxtPid;
+  if (d.bacHist)   DB.bacHist   = d.bacHist;
+  if (d.betLog)    DB.betLog    = d.betLog;
+  if (d.adHist)    DB.adHist    = d.adHist;
+  if (d.snHist)    DB.snHist    = d.snHist;
 }
 
 function startRealtimeSync() {
@@ -2623,24 +2619,26 @@ checkIOSInstall();
 // ═══ INIT ═══
 window.onerror = function(msg,src,line,col,err){console.warn('Error:',msg,'line',line);return true;};
 
+// 관리자 계정 즉시 세팅 (비동기 loadDB 전에도 로그인 가능하도록)
+function ensureAdmin() {
+  if (!DB.users.find(u => u.id === '뚜릴')) {
+    DB.users.unshift({id:'뚜릴',pw:'0917',nick:'관리자',name:'관리자',phone:'010-0000-0000',balance:9999999,isAdmin:true,grade:'최고관리자',joined:'2024-01-01',betTotal:0});
+  }
+}
+ensureAdmin();
+
+// 기본 초기화 (DB 로드 전에도 UI는 보여야 함)
+initDk();
+renderNumGrid();
+renderEvents();
+initShare();
+
+// 비동기로 DB 로드 + Firebase 연결
 (async () => {
-  // Firebase 동적 로드 (GitHub Pages에서만)
-  await initFirebase();
+  try { await initFirebase(); } catch(e) { console.warn('Firebase skip:', e); }
+  try { await loadDB(); } catch(e) { console.warn('loadDB skip:', e); }
 
-  // DB 불러오기
-  try { await loadDB(); } catch(e) { console.warn('loadDB failed:', e); }
-
-  // 로딩 화면 제거
-  const fbL = document.getElementById('fbLoading');
-  if (fbL) fbL.remove();
-
-  // 초기화
-  initDk();
-  renderNumGrid();
-  renderEvents();
-  initShare();
-
-  // 실시간 동기화 (Firebase일 때만)
+  // 실시간 동기화
   startRealtimeSync();
 
   setInterval(()=>{
