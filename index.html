@@ -971,34 +971,90 @@ body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 </div><!-- /app -->
-<script>
-// ═══════════════ STORAGE ═══════════════
-const STORE_KEY = 'dduril_v1';
-function saveDB() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); } catch(e) {}
-}
-function loadDB() {
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDiJSTYpfoZBVFr-Fa-8RYIS6Nrvkyl11g",
+  authDomain: "dduril-439da.firebaseapp.com",
+  databaseURL: "https://dduril-439da-default-rtdb.firebaseio.com",
+  projectId: "dduril-439da",
+  storageBucket: "dduril-439da.firebasestorage.app",
+  messagingSenderId: "960986474455",
+  appId: "1:960986474455:web:6da0932d4a88a48c180d92"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const fbDB  = getDatabase(fbApp);
+
+// ── Firebase 저장 ──
+async function saveDB() {
   try {
-    const d = localStorage.getItem(STORE_KEY);
-    if (d) {
-      const parsed = JSON.parse(d);
-      // merge users (keep admin always)
-      if (parsed.users) DB.users = parsed.users;
-      if (parsed.charges) DB.charges = parsed.charges;
-      if (parsed.exchanges) DB.exchanges = parsed.exchanges;
-      if (parsed.posts) DB.posts = parsed.posts;
-      if (parsed.messages) DB.messages = parsed.messages;
-      if (parsed.nxtPid) DB.nxtPid = parsed.nxtPid;
-      if (parsed.bacHist) DB.bacHist = parsed.bacHist;
-      if (parsed.betLog) DB.betLog = parsed.betLog;
-      if (parsed.adHist) DB.adHist = parsed.adHist;
-      if (parsed.snHist) DB.snHist = parsed.snHist;
+    const data = {
+      users:     DB.users,
+      charges:   DB.charges,
+      exchanges: DB.exchanges,
+      posts:     DB.posts,
+      messages:  DB.messages,
+      nxtPid:    DB.nxtPid,
+      bacHist:   DB.bacHist,
+      betLog:    DB.betLog,
+      adHist:    DB.adHist,
+      snHist:    DB.snHist,
+    };
+    await set(ref(fbDB, 'dduril'), data);
+  } catch(e) { console.warn('saveDB error:', e); }
+}
+
+// ── Firebase 불러오기 ──
+async function loadDB() {
+  try {
+    const snap = await get(ref(fbDB, 'dduril'));
+    if (snap.exists()) {
+      const d = snap.val();
+      if (d.users)     DB.users     = d.users;
+      if (d.charges)   DB.charges   = d.charges;
+      if (d.exchanges) DB.exchanges = d.exchanges;
+      if (d.posts)     DB.posts     = d.posts;
+      if (d.messages)  DB.messages  = d.messages;
+      if (d.nxtPid)    DB.nxtPid    = d.nxtPid;
+      if (d.bacHist)   DB.bacHist   = d.bacHist;
+      if (d.betLog)    DB.betLog    = d.betLog;
+      if (d.adHist)    DB.adHist    = d.adHist;
+      if (d.snHist)    DB.snHist    = d.snHist;
     }
-  } catch(e) {}
-  // Ensure admin always exists
+  } catch(e) { console.warn('loadDB error:', e); }
+  // 관리자 계정 항상 유지
   if (!DB.users.find(u => u.id === '뚜릴')) {
     DB.users.unshift({id:'뚜릴',pw:'0917',nick:'관리자',name:'관리자',phone:'010-0000-0000',balance:9999999,isAdmin:true,grade:'최고관리자',joined:'2024-01-01',betTotal:0});
+    await saveDB();
   }
+}
+
+// ── 실시간 동기화 (다른 기기 변경사항 자동 반영) ──
+function startRealtimeSync() {
+  onValue(ref(fbDB, 'dduril'), (snap) => {
+    if (!snap.exists()) return;
+    const d = snap.val();
+    // 현재 로그인된 유저 정보 유지하면서 DB 동기화
+    const curId = DB.cur?.id;
+    if (d.users)     DB.users     = d.users;
+    if (d.charges)   DB.charges   = d.charges;
+    if (d.exchanges) DB.exchanges = d.exchanges;
+    if (d.posts)     DB.posts     = d.posts;
+    if (d.messages)  DB.messages  = d.messages;
+    if (d.nxtPid)    DB.nxtPid    = d.nxtPid;
+    // 현재 로그인 유저 정보 갱신
+    if (curId) {
+      const updatedUser = DB.users.find(u => u.id === curId);
+      if (updatedUser) {
+        DB.cur = updatedUser;
+        rfBal();
+        checkMsgs();
+      }
+    }
+  });
 }
 
 // ═══════════════ DATA ═══════════════
@@ -1312,32 +1368,28 @@ const LAD = {
 
 // 사다리 생성: 세로 2기둥, 가로줄 3~4개
 function genLad() {
+  // 3줄 또는 4줄 랜덤
   LAD.lines = Math.random() < 0.5 ? 3 : 4;
-  // 가로줄 y위치: 0~1 사이 균등 랜덤
+
+  // 가로줄 y위치 랜덤 생성 (균등 분할 + 랜덤 오프셋)
   const rungs = [];
   const step = 1 / (LAD.lines + 1);
   for (let i = 1; i <= LAD.lines; i++) {
-    // 각 위치에 약간의 랜덤 오프셋
-    rungs.push(step * i + (Math.random() - 0.5) * step * 0.3);
+    const base = step * i;
+    const offset = (Math.random() - 0.5) * step * 0.5;
+    rungs.push(Math.min(0.85, Math.max(0.15, base + offset)));
   }
-  LAD.rungs = rungs;
-  // 결과 계산: 좌→우로 가로줄 홀수번째면 우측 도착, 짝수번째면 좌측 도착
-  // 실제 사다리: 좌출 시 가로줄 만날 때마다 방향 전환
+  LAD.rungs = rungs.sort((a,b) => a-b);
+
+  // 실제 공 경로로 좌출/우출 결과 계산
+  // 좌출: 왼쪽에서 출발, 가로줄 만날 때마다 좌우 전환
   let leftPos = 0; // 0=왼쪽, 1=오른쪽
   for (let i = 0; i < LAD.lines; i++) {
-    leftPos = 1 - leftPos; // 가로줄마다 좌우 전환
+    leftPos = 1 - leftPos; // 가로줄마다 반전
   }
-  // leftPos: 좌출의 최종 도착 (0=좌, 1=우)
-  // 도착 번호: 좌출이 도착하는 쪽 번호
-  // 실제로는 도착 번호 1,2 (3줄이면 3, 4줄이면 4 아님 — 항상 2개 기둥)
-  // 좌출: 왼쪽출발 → 가로줄 수에 따라 홀/짝 결정
-  LAD.leftResult  = LAD.lines % 2 === 1 ? 'even' : 'odd';  // 홀수줄이면 짝, 짝수줄이면 홀 (좌출 기준)
-  LAD.rightResult = LAD.lines % 2 === 1 ? 'odd'  : 'even'; // 우출은 반대
-  // 랜덤 요소 추가
-  if (Math.random() < 0.5) {
-    LAD.leftResult  = LAD.leftResult  === 'odd' ? 'even' : 'odd';
-    LAD.rightResult = LAD.rightResult === 'odd' ? 'even' : 'odd';
-  }
+  // leftPos 0이면 왼쪽 도착(홀=1번), 1이면 오른쪽 도착(짝=2번)
+  LAD.leftResult  = leftPos === 0 ? 'odd'  : 'even'; // 왼쪽도착=홀, 오른쪽도착=짝
+  LAD.rightResult = leftPos === 0 ? 'even' : 'odd';  // 우출은 반대
 }
 
 function initLad() {
@@ -1490,56 +1542,165 @@ function revealLad() {
   const title = document.getElementById('ladTitle');
   if (phase) phase.textContent = '결과 공개!';
   if (title) title.textContent = '🎉 Round '+LAD.round+' 결과';
-  // 타이머 0 표시
   const n=document.getElementById('ladTimerN'); if(n)n.textContent='0';
   const circ=document.getElementById('ladTimerC');if(circ){circ.style.strokeDashoffset='138.2';circ.style.stroke='var(--gold)';}
-  // 가림막 제거 + 사다리 그리기
-  drawLadder(false);
-  const curtain = document.getElementById('ladCurtain');
-  if (curtain) curtain.classList.add('gone');
+
   // 결과 계산
-  const actualDir   = ['left','right'][Math.floor(Math.random()*2)]; // 실제론 좌/우 동시 결과
   const leftOE  = LAD.leftResult;
   const rightOE = LAD.rightResult;
   const lineStr = LAD.lines+'줄';
-  // 내 베팅 판정
   let isWin = false, pay = 0;
   if (LAD.confirmed) {
     const myOE = M.lDir==='right' ? rightOE : leftOE;
-    const cnt  = [M.lDir,M.lLine,M.lOe].filter(Boolean).length;
     let wins = 0;
-    if (M.lDir  && true) wins++;                              // 좌/우 항상 존재하니 방향은 맞음
+    if (M.lDir)  wins++;
     if (M.lLine && M.lLine===String(LAD.lines)) wins++;
     if (M.lOe   && M.lOe===myOE) wins++;
     const betCnt = [M.lDir,M.lLine,M.lOe].filter(Boolean).length;
     isWin = wins === betCnt && betCnt > 0;
     const mul = betCnt===3?4:betCnt===2?2.5:1.8;
     pay = isWin ? Math.floor(LAD.betAmt*mul) : 0;
-    if (isWin) { DB.cur.balance+=pay; }
+    if (isWin) DB.cur.balance += pay;
     rfBal(); saveDB();
     DB.betLog.unshift({game:'사다리',bet:(M.lDir?M.lDir==='left'?'좌출':'우출':'')+(M.lLine?M.lLine+'줄':'')+(M.lOe?M.lOe==='odd'?'홀':'짝':''),amt:LAD.betAmt,res:lineStr+' 좌→'+(leftOE==='odd'?'홀':'짝'),win:isWin,prof:isWin?pay-LAD.betAmt:-LAD.betAmt,date:now()});
     DB.cur.betTotal=(DB.cur.betTotal||0)+LAD.betAmt;
     document.getElementById('ladLog').textContent = isWin?'✅ +'+fmt(pay-LAD.betAmt)+'원':'❌ -'+fmt(LAD.betAmt)+'원';
   }
-  // 결과 배너
+
+  // 가림막 제거
+  const curtain = document.getElementById('ladCurtain');
+  if (curtain) curtain.classList.add('gone');
+
+  // 사다리 배경 먼저 그리기
+  drawLadder(false);
+
+  // 공 애니메이션 — 좌출 공 하나만 내려옴
+  animSingleBall(leftOE, rightOE, lineStr, isWin, pay);
+}
+
+function animSingleBall(leftOE, rightOE, lineStr, isWin, pay) {
+  const cv = document.getElementById('ladC'); if(!cv) return;
+  const W = cv.width, H = cv.height;
+  const padX = W * 0.22, padY = H * 0.18;
+  const lx = padX, rx = W - padX;
+  const top = padY, bot = H - padY;
+  const lineH = bot - top;
+
+  // 좌출 공의 경로 계산
+  const path = calcBallPath(lx, rx, top, bot, lineH, true);
+
+  const totalFrames = 90;
+  let frame = 0;
+
+  function tick() {
+    const progress = frame / totalFrames;
+
+    // 사다리 배경 다시 그리기
+    drawLadder(false);
+
+    // 공 위치
+    const pos = getPathPos(path, progress);
+    const ctx = cv.getContext('2d');
+
+    // 빛나는 원형 트레일 (잔상)
+    if (frame > 3) {
+      const prevPos = getPathPos(path, (frame-3)/totalFrames);
+      ctx.beginPath();
+      ctx.arc(prevPos.x, prevPos.y, 10, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(230,57,70,0.2)';
+      ctx.fill();
+    }
+
+    // 공 본체 (빨강)
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 14, 0, Math.PI*2);
+    const grad = ctx.createRadialGradient(pos.x-3, pos.y-3, 2, pos.x, pos.y, 14);
+    grad.addColorStop(0, '#ff6b6b');
+    grad.addColorStop(1, '#b03030');
+    ctx.fillStyle = grad;
+    ctx.shadowColor = '#e63946';
+    ctx.shadowBlur = 18;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    frame++;
+    if (frame <= totalFrames) {
+      requestAnimationFrame(tick);
+    } else {
+      // 애니메이션 끝 → 결과 표시
+      showLadResult(leftOE, rightOE, lineStr, isWin, pay);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function calcBallPath(lx, rx, top, bot, lineH, isLeft) {
+  const points = [];
+  let curX = isLeft ? lx : rx;
+  points.push({x: curX, y: top});
+
+  const sortedRungs = [...LAD.rungs].sort((a,b) => a-b);
+  for (const r of sortedRungs) {
+    const y = top + lineH * r;
+    points.push({x: curX, y: y});
+    // 가로줄 만나면 반대편으로 이동
+    const newX = curX === lx ? rx : lx;
+    points.push({x: newX, y: y});
+    curX = newX;
+  }
+  points.push({x: curX, y: bot});
+  return points;
+}
+
+function getPathPos(path, progress) {
+  if (path.length < 2) return path[0] || {x:0, y:0};
+  const dists = [];
+  let total = 0;
+  for (let i = 1; i < path.length; i++) {
+    const dx = path[i].x - path[i-1].x;
+    const dy = path[i].y - path[i-1].y;
+    const d = Math.sqrt(dx*dx + dy*dy);
+    dists.push(d);
+    total += d;
+  }
+  const target = total * Math.min(progress, 1);
+  let traveled = 0;
+  for (let i = 0; i < dists.length; i++) {
+    if (traveled + dists[i] >= target) {
+      const t = dists[i] > 0 ? (target - traveled) / dists[i] : 0;
+      return {
+        x: path[i].x + (path[i+1].x - path[i].x) * t,
+        y: path[i].y + (path[i+1].y - path[i].y) * t,
+      };
+    }
+    traveled += dists[i];
+  }
+  return path[path.length-1];
+}
+
+function showLadResult(leftOE, rightOE, lineStr, isWin, pay) {
   const rb = document.getElementById('ladResultBanner');
   if (rb) {
     rb.innerHTML =
-      '<div style="line-height:1.8;">' +
-      '<span style="color:#aaa;font-size:11px;">'+lineStr+'</span><br>' +
-      '<span style="color:#ff6b6b;font-size:15px;font-weight:900;">🔴 좌출 → '+(leftOE==='odd'?'홀':'짝')+'</span>' +
+      '<div style="line-height:2;">' +
+      '<div style="color:#aaa;font-size:11px;margin-bottom:3px;">'+lineStr+'</div>' +
+      '<div><span style="color:#e63946;font-size:16px;font-weight:900;">🔴 좌출 → '+(leftOE==='odd'?'홀':'짝')+'</span>' +
       '&nbsp;&nbsp;' +
-      '<span style="color:#74b9ff;font-size:15px;font-weight:900;">🔵 우출 → '+(rightOE==='odd'?'홀':'짝')+'</span>' +
-      (LAD.confirmed?'<br><span style="color:'+(isWin?'var(--green)':'var(--red)')+';font-size:14px;">'+(isWin?'🎉 당첨! +'+fmt(pay)+'원':'❌ 낙첨 -'+fmt(LAD.betAmt)+'원')+'</span>':'') +
+      '<span style="color:#4361ee;font-size:16px;font-weight:900;">🔵 우출 → '+(rightOE==='odd'?'홀':'짝')+'</span></div>' +
+      (LAD.confirmed ? '<div style="color:'+(isWin?'var(--green)':'var(--red)')+';font-size:15px;font-weight:700;margin-top:3px;">'+(isWin?'🎉 당첨! +'+fmt(pay)+'원':'❌ 낙첨 -'+fmt(LAD.betAmt)+'원')+'</div>' : '') +
       '</div>';
-    rb.style.color='var(--text)';
+    rb.style.color = 'var(--text)';
   }
-  if(LAD.confirmed){if(isWin)toast('🎉 사다리 당첨! +'+fmt(pay)+'원','s');else toast('😢 사다리 낙첨','e');}
-  // 이력 추가
+  if (LAD.confirmed) {
+    if (isWin) toast('🎉 사다리 당첨! +'+fmt(pay)+'원', 's');
+    else toast('😢 사다리 낙첨 -'+fmt(LAD.betAmt)+'원', 'e');
+  }
   addLadHist(lineStr, leftOE, rightOE);
   LAD.round++;
-  // 5초 후 새 라운드
-  setTimeout(()=>initLad(), 5000);
+  setTimeout(() => initLad(), 5000);
 }
 
 // ── 이력 ──
@@ -2451,15 +2612,35 @@ function checkIOSInstall() {
 checkIOSInstall();
 
 // ═══ INIT ═══
-window.onerror = function(msg, src, line, col, err) {
-  console.warn('Caught error:', msg, 'at line', line);
-  return true; // prevent default error handling
-};
-loadDB();
-initDk();
-renderNumGrid();
-initShare();
-setInterval(()=>{const el=document.getElementById('stO');if(el)el.textContent=Math.floor(38+Math.random()*22);},5000);
+window.onerror = function(msg,src,line,col,err){console.warn('Error:',msg,'line',line);return true;};
+
+// 로딩 화면 표시
+document.getElementById('loginScreen').innerHTML += '<div id="fbLoading" style="position:absolute;inset:0;background:rgba(7,7,15,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:22px;z-index:10;"><div style="font-size:36px;margin-bottom:12px;">🔥</div><div style="font-size:13px;color:var(--gold);font-weight:700;">서버 연결 중...</div><div style="font-size:11px;color:var(--text3);margin-top:6px;">잠시만 기다려 주세요</div></div>';
+
+(async () => {
+  try {
+    await loadDB();
+  } catch(e) {
+    console.warn('Firebase load failed, using local:', e);
+  }
+  // 로딩 화면 제거
+  const fbL = document.getElementById('fbLoading');
+  if (fbL) fbL.remove();
+
+  // 초기화
+  initDk();
+  renderNumGrid();
+  renderEvents();
+  initShare();
+
+  // 실시간 동기화 시작
+  startRealtimeSync();
+
+  setInterval(()=>{
+    const el=document.getElementById('stO');
+    if(el) el.textContent=Math.floor(38+Math.random()*22);
+  },5000);
+})();
 </script>
 </body>
 </html>
