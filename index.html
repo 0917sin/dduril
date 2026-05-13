@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>뚜릴 카지노</title>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <!-- PWA 메타태그 -->
 <meta name="application-name" content="뚜릴 카지노">
 <meta name="description" content="뚜릴 카지노 - 바카라, 사다리, 달팽이, 크래시 등 다양한 게임">
@@ -972,93 +976,71 @@ body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellips
 
 </div><!-- /app -->
 <script>
-// ═══ FIREBASE (GitHub Pages 전용) ═══
-// 클로드 아티팩트에선 localStorage 사용, GitHub Pages에선 Firebase 사용
-const firebaseConfig = {
-  apiKey: "AIzaSyDiJSTYpfoZBVFr-Fa-8RYIS6Nrvkyl11g",
-  databaseURL: "https://dduril-439da-default-rtdb.firebaseio.com",
-  projectId: "dduril-439da",
-  appId: "1:960986474455:web:6da0932d4a88a48c180d92"
-};
-let fbDB = null;
-const USE_FIREBASE = (typeof location !== 'undefined' && location.hostname.includes('github.io'));
 
-// ── 저장 (Firebase 또는 localStorage 자동 선택) ──
-const LS_KEY = 'dduril_v1';
+// ═══ STORAGE (Firebase + localStorage 자동 선택) ═══
+const LS_KEY = 'dduril_v2';
+let _fbDB = null;
 
-async function saveDB() {
+// Firebase 초기화 (head의 CDN 스크립트가 로드된 후 실행)
+function initFB() {
   try {
-    const data = {
-      users:DB.users, charges:DB.charges, exchanges:DB.exchanges,
-      posts:DB.posts, messages:DB.messages, nxtPid:DB.nxtPid,
-      bacHist:DB.bacHist, betLog:DB.betLog, adHist:DB.adHist, snHist:DB.snHist,
-    };
-    if (USE_FIREBASE && fbDB) {
-      await fbDB.ref('dduril').set(data);
-    } else {
-      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    if (typeof firebase === 'undefined') return;
+    if (firebase.apps.length === 0) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyDiJSTYpfoZBVFr-Fa-8RYIS6Nrvkyl11g",
+        databaseURL: "https://dduril-439da-default-rtdb.firebaseio.com",
+        projectId: "dduril-439da",
+        appId: "1:960986474455:web:6da0932d4a88a48c180d92"
+      });
     }
-  } catch(e) { console.warn('saveDB:', e); }
+    _fbDB = firebase.database();
+    // 실시간 동기화
+    _fbDB.ref('dduril').on('value', snap => {
+      if (!snap.exists()) return;
+      const curId = DB.cur?.id;
+      applyData(snap.val());
+      if (curId) {
+        const u = DB.users.find(x => x.id === curId);
+        if (u) { DB.cur = u; rfBal(); checkMsgDot(); }
+      }
+    });
+    console.log('Firebase 연결 완료!');
+  } catch(e) { console.warn('Firebase init 실패, localStorage 사용:', e); }
 }
 
-async function loadDB() {
+function applyData(d) {
+  if (d.users     && Array.isArray(d.users))      DB.users     = d.users;
+  if (d.charges   && Array.isArray(d.charges))    DB.charges   = d.charges;
+  if (d.exchanges && Array.isArray(d.exchanges))  DB.exchanges = d.exchanges;
+  if (d.posts     && Array.isArray(d.posts))       DB.posts     = d.posts;
+  if (d.messages  && typeof d.messages==='object') DB.messages  = d.messages;
+  if (d.nxtPid)   DB.nxtPid   = d.nxtPid;
+  if (d.bacHist)  DB.bacHist  = d.bacHist;
+  if (d.betLog)   DB.betLog   = d.betLog;
+  if (d.adHist)   DB.adHist   = d.adHist;
+  if (d.snHist)   DB.snHist   = d.snHist;
+}
+
+function saveDB() {
+  const data = {
+    users:DB.users, charges:DB.charges, exchanges:DB.exchanges,
+    posts:DB.posts, messages:DB.messages, nxtPid:DB.nxtPid,
+    bacHist:DB.bacHist, betLog:DB.betLog, adHist:DB.adHist, snHist:DB.snHist,
+  };
+  // Firebase 우선, 없으면 localStorage
+  if (_fbDB) {
+    _fbDB.ref('dduril').set(data).catch(e => console.warn('FB save err:', e));
+  } else {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+}
+
+function loadDB() {
+  // localStorage에서 불러오기 (Firebase는 실시간 리스너로 자동 동기화)
   try {
-    if (USE_FIREBASE && fbDB) {
-      const snap = await fbDB.ref('dduril').get();
-      if (snap.exists()) applyDBData(snap.val());
-    } else {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) applyDBData(JSON.parse(raw));
-    }
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) applyData(JSON.parse(raw));
   } catch(e) { console.warn('loadDB:', e); }
-  ensureAdmin();
-}
-
-function applyDBData(d) {
-  if (d.users && Array.isArray(d.users))         DB.users     = d.users;
-  if (d.charges && Array.isArray(d.charges))     DB.charges   = d.charges;
-  if (d.exchanges && Array.isArray(d.exchanges)) DB.exchanges = d.exchanges;
-  if (d.posts && Array.isArray(d.posts))         DB.posts     = d.posts;
-  if (d.messages && typeof d.messages==='object') DB.messages = d.messages;
-  if (d.nxtPid)    DB.nxtPid    = d.nxtPid;
-  if (d.bacHist)   DB.bacHist   = d.bacHist;
-  if (d.betLog)    DB.betLog    = d.betLog;
-  if (d.adHist)    DB.adHist    = d.adHist;
-  if (d.snHist)    DB.snHist    = d.snHist;
-}
-
-function startRealtimeSync() {
-  if (!USE_FIREBASE || !fbDB) return; // 로컬은 실시간 동기화 불필요
-  fbDB.ref('dduril').on('value', (snap) => {
-    if (!snap.exists()) return;
-    const curId = DB.cur?.id;
-    applyDBData(snap.val());
-    if (curId) {
-      const u = DB.users.find(x => x.id === curId);
-      if (u) { DB.cur = u; rfBal(); checkMsgs(); }
-    }
-  });
-}
-
-// ── Firebase 동적 로드 (GitHub Pages에서만) ──
-async function initFirebase() {
-  if (!USE_FIREBASE) return;
-  try {
-    await Promise.all([
-      loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'),
-      loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'),
-    ]);
-    firebase.initializeApp(firebaseConfig);
-    fbDB = firebase.database();
-  } catch(e) { console.warn('Firebase init failed, using localStorage:', e); }
-}
-
-function loadScript(src) {
-  return new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = src; s.onload = res; s.onerror = rej;
-    document.head.appendChild(s);
-  });
 }
 
 
@@ -2619,33 +2601,30 @@ checkIOSInstall();
 // ═══ INIT ═══
 window.onerror = function(msg,src,line,col,err){console.warn('Error:',msg,'line',line);return true;};
 
-// 관리자 계정 즉시 세팅 (비동기 loadDB 전에도 로그인 가능하도록)
-function ensureAdmin() {
-  if (!DB.users.find(u => u.id === '뚜릴')) {
-    DB.users.unshift({id:'뚜릴',pw:'0917',nick:'관리자',name:'관리자',phone:'010-0000-0000',balance:9999999,isAdmin:true,grade:'최고관리자',joined:'2024-01-01',betTotal:0});
-  }
-}
-ensureAdmin();
+// localStorage에서 즉시 로드
+loadDB();
 
-// 기본 초기화 (DB 로드 전에도 UI는 보여야 함)
+// 관리자 계정 항상 유지
+if (!DB.users.find(u => u.id === '뚜릴')) {
+  DB.users.unshift({id:'뚜릴',pw:'0917',nick:'관리자',name:'관리자',phone:'010-0000-0000',balance:9999999,isAdmin:true,grade:'최고관리자',joined:'2024-01-01',betTotal:0});
+}
+
+// 초기화
 initDk();
 renderNumGrid();
 renderEvents();
 initShare();
 
-// 비동기로 DB 로드 + Firebase 연결
-(async () => {
-  try { await initFirebase(); } catch(e) { console.warn('Firebase skip:', e); }
-  try { await loadDB(); } catch(e) { console.warn('loadDB skip:', e); }
+// Firebase 연결 (CDN 로드 완료 후)
+window.addEventListener('load', () => {
+  initFB();
+});
 
-  // 실시간 동기화
-  startRealtimeSync();
+setInterval(()=>{
+  const el = document.getElementById('stO');
+  if(el) el.textContent = Math.floor(38+Math.random()*22);
+}, 5000);
 
-  setInterval(()=>{
-    const el = document.getElementById('stO');
-    if(el) el.textContent = Math.floor(38+Math.random()*22);
-  }, 5000);
-})();
 </script>
 </body>
 </html>
