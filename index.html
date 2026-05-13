@@ -48,7 +48,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;filter:none!important;}
 
 /* ── MODALS ── */
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:800;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:16px;}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:16px;}
 .mo.open{display:flex;}
 .md{background:var(--dark3);border:1px solid var(--border);border-radius:var(--r2);padding:26px;width:100%;max-width:500px;position:relative;animation:mIn .25s ease;max-height:90vh;overflow-y:auto;}
 @keyframes mIn{from{transform:translateY(20px);opacity:0;}to{transform:none;opacity:1;}}
@@ -1285,9 +1285,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 </div><!-- end #app -->
 
-<!-- 🔥 Firebase SDK (메인 스크립트 직전에 로드) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- 🔥 Firebase SDK - async 로드 (실패해도 메인 스크립트 차단 안함) -->
+<script async src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script async src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
 // ══════════════════════════════════════════
@@ -1315,11 +1315,9 @@ function initFirebase(){
     console.log('[Firebase] 설정 없음 - localStorage만 사용');
     return false;
   }
-  // SDK 로드 확인
+  // SDK 로드 확인 - 안 되어 있으면 대기
   if(typeof firebase === 'undefined'){
-    console.warn('[Firebase] SDK 로드 대기 중...');
-    // SDK를 동적으로 로드 시도
-    loadFirebaseSDK();
+    console.log('[Firebase] SDK 대기 중...');
     return false;
   }
   try{
@@ -1336,82 +1334,53 @@ function initFirebase(){
   }
 }
 
-// SDK를 동적으로 로드 (script 태그가 차단된 경우 대비)
-let _sdkLoading = false;
-function loadFirebaseSDK(){
-  if(_sdkLoading || typeof firebase !== 'undefined') return;
-  _sdkLoading = true;
-  console.log('[Firebase] 🔄 SDK 동적 로드 시작...');
-
-  const loadScript = (src) => new Promise((resolve, reject)=>{
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = ()=>resolve(src);
-    s.onerror = ()=>reject(new Error('Failed: '+src));
-    document.head.appendChild(s);
-  });
-
-  // 여러 CDN 시도
-  const tryLoad = async () => {
-    const cdns = [
-      ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
-       'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'],
-      ['https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/app.js',
-       'https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/database.js'],
-    ];
-    for(const [appUrl, dbUrl] of cdns){
-      try{
-        await loadScript(appUrl);
-        await loadScript(dbUrl);
-        console.log('[Firebase] ✅ SDK 로드 성공:', appUrl.split('/')[2]);
-        // 로드 성공 후 초기화 및 데이터 로드
-        if(typeof firebase !== 'undefined'){
-          if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-          _fbDB = firebase.database();
-          _fbReady = true;
-          // 즉시 데이터 로드
-          _fbDB.ref('dduril').once('value').then(snap=>{
-            const d=snap.val();
-            if(d) applyCloudData(d);
-          });
-          // 실시간 동기화
-          _fbDB.ref('dduril').on('value', snap=>{
-            const d=snap.val();
-            if(!d) return;
-            if(d.updatedAt && DB._lastSavedAt && Math.abs(d.updatedAt-DB._lastSavedAt)<1000) return;
-            applyCloudData(d);
-          });
-          return;
-        }
-      } catch(e){
-        console.warn('[Firebase] CDN 실패, 다음 CDN 시도:', appUrl.split('/')[2]);
-      }
-    }
-    console.error('[Firebase] ❌ 모든 CDN 로드 실패. 네트워크 또는 광고차단을 확인하세요');
-  };
-  tryLoad();
+// SDK 로드를 폴링으로 기다림 (최대 10초)
+function waitForFirebaseSDK(callback, attempts){
+  attempts = attempts || 0;
+  if(attempts > 50){
+    console.warn('[Firebase] SDK 로드 시간 초과 - localStorage만 사용');
+    return;
+  }
+  if(typeof firebase !== 'undefined'){
+    callback();
+  } else {
+    setTimeout(()=>waitForFirebaseSDK(callback, attempts+1), 200);
+  }
 }
 
 // 클라우드 데이터를 DB에 적용
 function applyCloudData(d){
+  // 현재 로그인 유저 ID 기억
+  const curId = DB.cur ? DB.cur.id : null;
+
   const admin=DB.users.find(u=>u.id==='뚜릴');
-  DB.users = d.users && d.users.length ? d.users : DB.users;
-  if(admin && !DB.users.find(u=>u.id==='뚜릴')){
-    DB.users.unshift(admin);
+  // 클라우드에 유저 있으면 사용, 없으면 로컬 유지
+  if(d.users && d.users.length){
+    DB.users = d.users;
+    if(admin && !DB.users.find(u=>u.id==='뚜릴')){
+      DB.users.unshift(admin);
+    }
   }
-  DB.charges=d.charges||[];
-  DB.exchanges=d.exchanges||[];
-  DB.posts=d.posts && d.posts.length ? d.posts : DB.posts;
+  DB.charges=d.charges||DB.charges||[];
+  DB.exchanges=d.exchanges||DB.exchanges||[];
+  if(d.posts && d.posts.length){DB.posts=d.posts;}
   DB.nxtPid=d.nxtPid||DB.nxtPid;
-  DB.bacHist=d.bacHist||[];
-  DB.betLog=d.betLog||[];
-  DB.adHist=d.adHist||[];
-  DB.snHist=d.snHist||[];
-  DB.messages=d.messages||[];
+  DB.bacHist=d.bacHist||DB.bacHist||[];
+  DB.betLog=d.betLog||DB.betLog||[];
+  DB.adHist=d.adHist||DB.adHist||[];
+  DB.snHist=d.snHist||DB.snHist||[];
+  DB.messages=d.messages||DB.messages||[];
   try{localStorage.setItem('dduril_db',JSON.stringify(DB));}catch(e){}
-  if(DB.cur){
-    const u=DB.users.find(x=>x.id===DB.cur.id);
-    if(u){DB.cur=u;updHdr();rfBal();}
+
+  // 로그인 상태 유지: 현재 유저를 갱신된 데이터로 다시 찾기
+  if(curId){
+    const u=DB.users.find(x=>x.id===curId);
+    if(u){
+      DB.cur=u;
+      updHdr();
+      rfBal();
+    }
+    // 만약 클라우드에 없으면 로컬 유지 (DB.cur 변경 안 함)
   }
   console.log('[Firebase] ✅ 클라우드 데이터 동기화 완료');
 }
@@ -1423,12 +1392,13 @@ function saveDB(){
   if(_fbReady && _fbDB){
     clearTimeout(_fbSaveTimer);
     _fbSaveTimer = setTimeout(()=>{
-      // cur(현재 로그인 유저)은 저장 안함 - 메모리에만
+      const now2 = Date.now();
+      DB._lastSavedAt = now2;
       const data = {
         users:DB.users, charges:DB.charges, exchanges:DB.exchanges,
         posts:DB.posts, nxtPid:DB.nxtPid, bacHist:DB.bacHist,
         betLog:DB.betLog, adHist:DB.adHist, snHist:DB.snHist,
-        messages:DB.messages, updatedAt:Date.now()
+        messages:DB.messages, updatedAt:now2
       };
       _fbDB.ref('dduril').set(data).catch(e=>console.warn('[Firebase] 저장 실패:',e));
     }, 500);
@@ -1454,8 +1424,10 @@ function loadDB(){
     }
   }catch(e){}
 
-  // 2단계: Firebase 초기화하고 클라우드에서 최신 데이터 가져오기
-  if(initFirebase() && _fbDB){
+  // 2단계: Firebase SDK 로드 기다렸다가 초기화 (10초 타임아웃)
+  if(!FIREBASE_CONFIG.apiKey)return;
+  waitForFirebaseSDK(()=>{
+    if(!initFirebase() || !_fbDB)return;
     _fbDB.ref('dduril').once('value').then(snap=>{
       const d=snap.val();
       if(d){applyCloudData(d);}
@@ -1468,7 +1440,7 @@ function loadDB(){
       if(d.updatedAt && DB._lastSavedAt && Math.abs(d.updatedAt-DB._lastSavedAt)<1000)return;
       applyCloudData(d);
     });
-  }
+  });
 }
 
 // ══════════════════════════════════════════
@@ -1545,6 +1517,7 @@ function doLogin(){
   const u=DB.users.find(u=>u.id===id&&u.pw===pw&&!u.deleted);
   if(!u){err.textContent='아이디 또는 비밀번호가 올바르지 않습니다';err.style.display='block';return;}
   err.style.display='none';DB.cur=u;
+  try{sessionStorage.setItem('dduril_curId', u.id);}catch(e){}
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   updHdr();checkMsgs();
@@ -1566,11 +1539,19 @@ function doRegister(){
   if(!document.getElementById('rgAgr').checked){err.textContent='이용약관에 동의해 주세요';err.style.display='block';return;}
   const u={id,pw,nick:nk,name:nm,phone:ph,balance:0,isAdmin:false,grade:'일반회원',joined:nd(),betTotal:0,deleted:false};
   DB.users.push(u);DB.cur=u;err.style.display='none';cm('modReg');
+  try{sessionStorage.setItem('dduril_curId', u.id);}catch(e){}
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   updHdr();saveDB();toast('회원가입 완료! 환영합니다 🎉','s');
 }
-function doLogout(){DB.cur=null;document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex';document.getElementById('liId').value='';document.getElementById('liPw').value='';toast('로그아웃 되었습니다','i');}
+function doLogout(){
+  DB.cur=null;
+  try{sessionStorage.removeItem('dduril_curId');}catch(e){}
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('liId').value='';document.getElementById('liPw').value='';
+  toast('로그아웃 되었습니다','i');
+}
 function updHdr(){
   if(!DB.cur)return;
   const u=DB.cur;
@@ -1705,82 +1686,14 @@ function swTab(t,btn){
   ['oe','coin','lad','snail','ad','num','sa','sports','slot','roulette','russian'].forEach(x=>{const el=document.getElementById('tab-'+x);if(el)el.style.display=x===t?'block':'none';});
   document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('on'));if(btn)btn.classList.add('on');
   clM();
-  // 한번만 초기화 (이미 백그라운드에서 돌고 있으면 다시 초기화 안함)
-  if(t==='lad' && !LAD.bgRunning) setTimeout(()=>{LAD.bgRunning=true;initLad();},60);
-  if(t==='snail' && !SN.bgRunning) setTimeout(()=>{SN.bgRunning=true;initSn();},60);
+  if(t==='lad')setTimeout(initLad,60);
+  if(t==='snail')setTimeout(initSn,60);
   if(t==='ad')setTimeout(()=>{initRoul();drawRoul(ROUL.angle);},60);
-  if(t==='sa' && !SA.bgRunning) setTimeout(()=>{SA.bgRunning=true;initSA();},60);
-  if(t==='sports' && !SPORTS.bgRunning) setTimeout(()=>{SPORTS.bgRunning=true;initSports();},60);
+  if(t==='sa')setTimeout(initSA,60);
+  if(t==='sports')setTimeout(initSports,60);
   if(t==='slot')setTimeout(initSlot,60);
   if(t==='roulette')setTimeout(initRoulette,60);
   if(t==='russian')setTimeout(initRussian,60);
-}
-
-// ═══ 백그라운드 자동 진행 시스템 ═══
-// 모든 게임 시작 (페이지 로드 후 한번)
-function startAllBackgroundGames(){
-  // 사다리
-  if(typeof LAD!=='undefined' && !LAD.bgRunning){
-    LAD.bgRunning=true;
-    setTimeout(initLad, 1000);
-  }
-  // 달팽이
-  if(typeof SN!=='undefined' && !SN.bgRunning){
-    SN.bgRunning=true;
-    setTimeout(()=>{ initSn(); autoStartSnail(); }, 1500);
-  }
-  // 스포츠
-  if(typeof SPORTS!=='undefined' && !SPORTS.bgRunning){
-    SPORTS.bgRunning=true;
-    setTimeout(initSports, 2000);
-  }
-  // 서든어택
-  if(typeof SA!=='undefined' && !SA.bgRunning){
-    SA.bgRunning=true;
-    setTimeout(initSA, 2500);
-  }
-}
-
-// 달팽이 자동 시작 (베팅 없어도 진행)
-function autoStartSnail(){
-  if(!SN || SN.running) return;
-  // 베팅 없이도 경주 진행 (관전 모드)
-  SN.spectatorMode = true;
-  startSnAuto();
-}
-
-function startSnAuto(){
-  if(!SN || SN.running) return;
-  SN.running=true;SN.pos=[0,0,0];
-  document.getElementById('snStart') && (document.getElementById('snStart').disabled=true);
-  const tm=document.getElementById('snTm');if(tm)tm.textContent='🏁 경주 중...';
-  const spd=[.003+Math.random()*.004,.003+Math.random()*.004,.003+Math.random()*.004];
-  let winner=-1;
-  const tick=()=>{
-    if(!SN.running)return;
-    for(let i=0;i<3;i++){if(SN.pos[i]<1){const burst=Math.random()<.05?Math.random()*.008:0;SN.pos[i]=Math.min(1,SN.pos[i]+spd[i]+burst);}}
-    renderTrack();
-    const done=SN.pos.findIndex(p=>p>=1);
-    if(done>=0&&winner<0){winner=done;SN.pos[done]=1;SN.running=false;renderTrack();
-      // 관전 모드면 베팅 정산 없이 다음 라운드
-      if(SN.spectatorMode && SN.ch<0){
-        const wn=SN.names[winner];
-        if(tm)tm.textContent='🏆 '+wn+' 1등!';
-        DB.snHist.unshift(winner);if(DB.snHist.length>20)DB.snHist.pop();
-        const pv=document.getElementById('snPrev');
-        if(pv)pv.innerHTML=DB.snHist.map(x=>'<span class="sndot" style="background:'+SN.colors[x]+'33;border:1px solid '+SN.colors[x]+';color:'+SN.colors[x]+';">'+SN.names[x]+'</span>').join('');
-        // 5초 후 다음 경주
-        setTimeout(()=>{if(SN.bgRunning){SN.ch=-1;startSnAuto();}}, 5000);
-      } else {
-        finishSn(winner);
-        // 자동 다음 라운드
-        setTimeout(()=>{if(SN.bgRunning && SN.ch<0){startSnAuto();}}, 5000);
-      }
-      return;
-    }
-    SN.animId=requestAnimationFrame(tick);
-  };
-  SN.animId=requestAnimationFrame(tick);
 }
 
 // ODD/EVEN
@@ -2690,32 +2603,10 @@ function initSports() {
   renderSpMatches();
   renderSpCart();
   renderSpResults();
-  // 백그라운드 자동 진행: 5초 후 첫 매치 LIVE로
-  if(SPORTS.bgRunning && !SPORTS.autoIv){
-    SPORTS.autoIv=setInterval(autoStartNextSportsMatch, 8000);
-    setTimeout(autoStartNextSportsMatch, 5000);
-  }
 }
 
 function autoStartNextSportsMatch(){
-  // ready 상태 매치 중 1개를 자동 시작 (관전 모드)
-  if(!SPORTS.bgRunning)return;
-  const ready=SPORTS.matches.filter(m=>m.status==='ready');
-  // 이미 라이브 중인게 5개 이상이면 새로 시작 안함
-  if(SPORTS.liveMatches.length>=5)return;
-  if(!ready.length)return;
-  const m=ready[Math.floor(Math.random()*ready.length)];
-  // 베팅 없이 라이브로 (관전 모드)
-  SPORTS.matches=SPORTS.matches.filter(x=>x.id!==m.id);
-  m.status='live'; m.log=[]; m.homeScore=0; m.awayScore=0; m.minute=0;
-  m._spectator=true;
-  SPORTS.liveMatches.push(m);
-  startLiveMatch(m, [], 0, 1);
-  renderSpMatches();
-  const ls=document.getElementById('spLiveSection');
-  if(ls)ls.style.display='block';
-  // 부족한 매치 자동 생성
-  addNewSpMatches();
+  // 사용 안 함 (백그라운드 시스템 비활성화)
 }
 
 function filterSports(type, btn) {
@@ -4820,15 +4711,29 @@ renderEvents();
 initShare();
 // Write box hidden by default
 toggleWrite(false);
-// Setup hide login screen (app hidden by default from CSS #app{display:none})
-document.getElementById('loginScreen').style.display='flex';
+
+// 세션 자동 로그인 (새로고침 후에도 로그인 유지)
+try{
+  const savedId = sessionStorage.getItem('dduril_curId');
+  if(savedId){
+    const u = DB.users.find(x=>x.id===savedId && !x.deleted);
+    if(u){
+      DB.cur = u;
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('app').style.display='block';
+      updHdr();
+      checkMsgs();
+    } else {
+      document.getElementById('loginScreen').style.display='flex';
+    }
+  } else {
+    document.getElementById('loginScreen').style.display='flex';
+  }
+}catch(e){
+  document.getElementById('loginScreen').style.display='flex';
+}
 
 setInterval(()=>{const el=document.getElementById('stO');if(el)el.textContent=Math.floor(38+Math.random()*22);},5000);
-
-// 🎮 모든 백그라운드 게임 자동 시작 (페이지 로드 3초 후)
-setTimeout(()=>{
-  startAllBackgroundGames();
-},3000);
 </script>
 </body>
 </html>
