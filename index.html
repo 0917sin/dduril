@@ -59,11 +59,14 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 /* ── HEADER ── */
 .hdr{position:sticky;top:0;z-index:200;background:rgba(7,7,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
 .hi{max-width:1400px;margin:0 auto;height:52px;padding:0 14px;display:flex;align-items:center;gap:10px;}
+@media(min-width:768px){.hi{height:60px;padding:0 20px;gap:14px;}}
 .logo{font-family:'Cinzel',serif;font-size:19px;font-weight:900;background:linear-gradient(135deg,var(--gold2),var(--gold),#fff8cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;cursor:pointer;flex-shrink:0;letter-spacing:2px;}
 .logo small{font-size:8px;display:block;letter-spacing:4px;-webkit-text-fill-color:var(--text3);margin-top:-3px;}
-.hn{display:flex;gap:1px;flex:1;overflow-x:auto;scrollbar-width:none;}.hn::-webkit-scrollbar{display:none;}
-.nb{padding:5px 10px;border-radius:6px;border:none;background:none;color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:11px;cursor:pointer;white-space:nowrap;transition:.2s;}
-.nb:hover,.nb.on{background:rgba(255,215,0,.1);color:var(--gold);}
+.hn{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none;align-items:center;}.hn::-webkit-scrollbar{display:none;}
+.nb{padding:7px 12px;border-radius:7px;border:none;background:none;color:var(--text2);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap;transition:.2s;font-weight:500;flex-shrink:0;}
+.nb:hover,.nb.on{background:rgba(255,215,0,.12);color:var(--gold);}
+@media(min-width:768px){.nb{padding:8px 14px;font-size:14px;}}
+@media(max-width:480px){.nb{padding:5px 8px;font-size:11px;}}
 .hr2{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .bchip{background:var(--dark3);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:11px;display:flex;align-items:center;gap:4px;}
 .bv{color:var(--gold);font-weight:700;}.abdg{background:var(--red);color:#fff;font-size:9px;padding:2px 4px;border-radius:3px;font-weight:700;}
@@ -264,16 +267,35 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .ncl:hover{border-color:var(--gold);color:var(--gold);}.ncl.pk{background:rgba(255,215,0,.15);border-color:var(--gold);color:var(--gold);}
 
 /* ── ODD/EVEN + COIN ── */
-.dice{width:62px;height:62px;border-radius:11px;background:var(--dark4);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-.dice.rolling{animation:dr .5s linear infinite;}
-@keyframes dr{0%{transform:rotate(0);}25%{transform:rotate(10deg);}75%{transform:rotate(-10deg);}100%{transform:rotate(0);}}
+.dice{width:110px;height:110px;border-radius:18px;background:linear-gradient(135deg,#fff,#e8e8e8);border:3px solid #888;display:flex;align-items:center;justify-content:center;font-size:80px;color:#222;box-shadow:0 6px 20px rgba(0,0,0,.5),inset 0 -4px 8px rgba(0,0,0,.2),inset 0 4px 8px rgba(255,255,255,.6);text-shadow:0 1px 2px rgba(0,0,0,.3);}
+.dice.rolling{animation:dr .3s linear infinite;}
+@keyframes dr{0%{transform:rotate(0) scale(1);}25%{transform:rotate(90deg) scale(1.1);}50%{transform:rotate(180deg) scale(1);}75%{transform:rotate(270deg) scale(1.1);}100%{transform:rotate(360deg) scale(1);}}
 .oebtns,.cfbtns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;max-width:340px;margin-left:auto;margin-right:auto;}
 .oebtn,.cfbtn{padding:11px;border-radius:10px;border:2px solid var(--border2);background:var(--dark3);cursor:pointer;font-size:13px;font-weight:700;color:var(--text);transition:.2s;font-family:'Noto Sans KR',sans-serif;}
 .oebtn:hover,.oebtn.sel,.cfbtn:hover,.cfbtn.sel{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,.07);}
-.coind{width:96px;height:96px;border-radius:50%;margin:14px auto;display:flex;align-items:center;justify-content:center;font-size:48px;border:4px solid var(--gold2);background:linear-gradient(135deg,#c9a84c,#FFD700);box-shadow:0 8px 24px rgba(255,215,0,.3);}
-.coind.tails{background:linear-gradient(135deg,#777,#aaa);border-color:#999;}
-.coind.flip{animation:cf .6s linear;}
-@keyframes cf{0%,100%{transform:rotateY(0);}50%{transform:rotateY(90deg);}}
+.coinwrap{width:140px;height:140px;margin:18px auto;display:flex;align-items:center;justify-content:center;}
+.coind{width:140px;height:140px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:65px;font-weight:900;font-family:'Cinzel',serif;border:7px solid #FFD700;background:radial-gradient(circle at 30% 30%,#FFE680,#FFB000 55%,#8a5500);color:#5a3500;text-shadow:0 2px 3px rgba(255,255,255,.5);box-shadow:inset 0 5px 15px rgba(255,255,255,.4),inset 0 -5px 15px rgba(0,0,0,.35),0 8px 25px rgba(0,0,0,.4);transition:transform .15s;}
+.coind.tail{border-color:#999;background:radial-gradient(circle at 30% 30%,#eee,#888 55%,#333);color:#111;}
+.coind.spinning{animation:coinFlip 1.4s steps(8) infinite;}
+@keyframes coinFlip{
+  0%{transform:scaleX(1);}
+  12.5%{transform:scaleX(.5);}
+  25%{transform:scaleX(0);}
+  37.5%{transform:scaleX(-.5);}
+  50%{transform:scaleX(-1);}
+  62.5%{transform:scaleX(-.5);}
+  75%{transform:scaleX(0);}
+  87.5%{transform:scaleX(.5);}
+  100%{transform:scaleX(1);}
+}
+.coind.jumping{animation:coinJump 2s ease-out;}
+@keyframes coinJump{
+  0%{transform:translateY(0);}
+  50%{transform:translateY(-50px);}
+  100%{transform:translateY(0);}
+}
+@keyframes coinShine{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3);}}
+@keyframes coinShine2{0%,100%{filter:brightness(1);}50%{filter:brightness(1.3);}}
 
 /* ── CHARGE/EXCHANGE ── */
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
@@ -481,7 +503,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="snav" onclick="gm('sports')"><span class="si">⚽</span>스포츠<span class="sb nb2">NEW</span></div>
     <div class="snav" onclick="gm('slot')"><span class="si">🎰</span>슬롯머신<span class="sb nb2">NEW</span></div>
     <div class="snav" onclick="gm('roulette')"><span class="si">🎡</span>룰렛<span class="sb nb2">NEW</span></div>
-    <div class="snav" onclick="gm('russian')"><span class="si">🔫</span>러시안룰렛<span class="sb">HOT</span></div>
     <div class="snav" onclick="goPage('charge')"><span class="si">💳</span>충전</div>
     <div class="snav" onclick="goPage('exchange')"><span class="si">💱</span>환전</div>
     <div class="snav" onclick="goPage('free')"><span class="si">📋</span>게시판</div>
@@ -524,7 +545,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="gc" onclick="gm('sports')"><span class="gbdg bn">NEW</span><span class="gi">⚽</span><div class="gn">AI 스포츠</div><div class="gs">축구·야구·농구·배구</div></div>
     <div class="gc" onclick="gm('slot')"><span class="gbdg bn">NEW</span><span class="gi">🎰</span><div class="gn">슬롯머신</div><div class="gs">777 잭팟!</div></div>
     <div class="gc" onclick="gm('roulette')"><span class="gbdg bn">NEW</span><span class="gi">🎡</span><div class="gn">룰렛</div><div class="gs">0~36 숫자 베팅</div></div>
-    <div class="gc" onclick="gm('russian')"><span class="gbdg bh">HOT</span><span class="gi">🔫</span><div class="gn">러시안룰렛</div><div class="gs">GO! 배율 폭발!</div></div>
     <div class="gc" onclick="gm('num')"><span class="gi">🔢</span><div class="gn">번호픽</div><div class="gs">숫자 맞추기</div></div>
   </div>
 </div>
@@ -597,10 +617,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <!-- OE -->
   <div id="tab-oe" style="max-width:420px;margin:0 auto;text-align:center;">
-    <div style="display:flex;justify-content:center;gap:12px;margin:16px 0;">
-      <div class="dice" id="d1">⚀</div><div class="dice" id="d2">⚀</div>
+    <div style="display:flex;justify-content:center;gap:22px;margin:22px 0 16px;">
+      <div class="dice" id="d1">?</div><div class="dice" id="d2">?</div>
     </div>
-    <div id="oeS" style="font-size:38px;font-weight:900;color:var(--gold);">-</div>
+    <div id="oeS" style="font-size:44px;font-weight:900;color:var(--gold);font-family:'Cinzel',serif;">-</div>
     <div id="oeR" style="font-size:15px;font-weight:700;margin:6px 0 11px;color:var(--text3);">베팅 후 굴리기!</div>
     <div class="oebtns">
       <button class="oebtn" id="oeO" onclick="selOE('odd')">홀 (ODD)<br><span style="font-size:10px;color:var(--text3);">1:1 배당</span></button>
@@ -617,7 +637,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <!-- COIN -->
   <div id="tab-coin" style="display:none;max-width:380px;margin:0 auto;text-align:center;">
-    <div class="coind" id="coinD">🪙</div>
+    <div class="coinwrap">
+      <div class="coind" id="coinD">H</div>
+    </div>
     <div id="coinR" style="font-size:15px;font-weight:700;margin:6px 0 11px;color:var(--text3);">베팅 후 던지기!</div>
     <div class="cfbtns">
       <button class="cfbtn" id="cfH" onclick="selCF('h')">앞면 HEAD<br><span style="font-size:10px;color:var(--text3);">1:1 배당</span></button>
@@ -1267,7 +1289,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div style="font-size:16px;font-weight:900;color:var(--gold);" id="myBal">-</div>
       </div>
       <div class="mnav on" onclick="swMy('info',this)">👤 회원정보</div>
-      <div class="mnav" onclick="swMy('msgs',this)">📩 메시지 <span id="msgCnt" style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;margin-left:4px;display:none;"></span></div>
+      <div class="mnav" onclick="swMy('msgs',this)">📩 메일함 <span id="msgCnt" style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;margin-left:4px;display:none;"></span></div>
       <div class="mnav" onclick="swMy('bets',this)">📊 베팅 내역</div>
       <div class="mnav" onclick="swMy('tx',this)">💰 입출금 내역</div>
       <div id="adminM" style="display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--border2);">
@@ -1621,20 +1643,68 @@ async function startBac(){
   if(BAC.bet<=0){toast('베팅 금액 설정','w');return;}
   if(DB.cur.balance<BAC.bet){toast('잔액 부족','e');return;}
   BAC.deal=true;document.getElementById('dealBtn').disabled=true;
-  DB.cur.balance-=BAC.bet;rfBal();clearBac();if(BAC.deck.length<15)initDk();
+  DB.cur.balance-=BAC.bet;rfBal();clearBac();
+  if(BAC.deck.length<15)initDk();
+
   const pC=[],bC=[],pEl=document.getElementById('pC'),bEl=document.getElementById('bC');
   const deal=(h,el,d)=>new Promise(r=>{setTimeout(()=>{const c=drwC();h.push(c);rndCard(c,el);r();},d);});
-  await deal(pC,pEl,200);await deal(bC,bEl,500);await deal(pC,pEl,800);await deal(bC,bEl,1100);
-  let ps=hv(pC),bs=hv(bC);document.getElementById('sD').textContent=`${ps}:${bs}`;
-  let done=ps>=8||bs>=8;
-  if(!done&&ps<=5){await deal(pC,pEl,1500);ps=hv(pC);}
-  if(!done){const p3=pC[2];let bd=false;if(!p3){bd=bs<=5;}else{const pv=cp(p3);if(bs<=2)bd=true;else if(bs===3)bd=pv!==8;else if(bs===4)bd=[2,3,4,5,6,7].includes(pv);else if(bs===5)bd=[4,5,6,7].includes(pv);else if(bs===6)bd=[6,7].includes(pv);}if(bd){await deal(bC,bEl,1900);bs=hv(bC);}}
+
+  // 초기 2장씩 (Player 먼저 1장, Banker 1장, Player 2장째, Banker 2장째)
+  await deal(pC,pEl,200);
+  await deal(bC,bEl,500);
+  await deal(pC,pEl,800);
+  await deal(bC,bEl,1100);
+
+  let ps=hv(pC),bs=hv(bC);
+  document.getElementById('sD').textContent=`${ps}:${bs}`;
+
+  // 🃏 바카라 정확한 3번째 카드 룰
+  // 1. 내추럴 체크 (8 또는 9) → 양쪽 모두 스탠드
+  const naturalP = ps>=8;
+  const naturalB = bs>=8;
+
+  let playerDrew = false;
+  let playerThirdValue = null; // 플레이어 3번째 카드의 점수값
+
+  if(!naturalP && !naturalB){
+    // 2. 플레이어 룰: 0~5 → 카드 추가, 6~7 → 스탠드
+    if(ps<=5){
+      await deal(pC,pEl,1500);
+      ps=hv(pC);
+      playerDrew = true;
+      playerThirdValue = cp(pC[2]);
+    }
+
+    // 3. 뱅커 룰
+    let bankerDraws = false;
+    if(!playerDrew){
+      // 플레이어가 스탠드한 경우: 뱅커는 0~5면 받고 6~7이면 스탠드
+      bankerDraws = bs<=5;
+    } else {
+      // 플레이어가 3번째 카드를 받은 경우: 플레이어 3번째 카드 값에 따라 결정
+      const t = playerThirdValue;
+      if(bs<=2) bankerDraws = true;                          // 뱅커 0,1,2 → 무조건 받음
+      else if(bs===3) bankerDraws = t !== 8;                 // 뱅커 3 → 플레이어 3번째가 8 아니면 받음
+      else if(bs===4) bankerDraws = t>=2 && t<=7;            // 뱅커 4 → 플레이어 3번째 2-7이면 받음
+      else if(bs===5) bankerDraws = t>=4 && t<=7;            // 뱅커 5 → 플레이어 3번째 4-7이면 받음
+      else if(bs===6) bankerDraws = t===6 || t===7;          // 뱅커 6 → 플레이어 3번째 6,7이면 받음
+      // 뱅커 7 → 무조건 스탠드 (자동 false)
+    }
+
+    if(bankerDraws){
+      await deal(bC,bEl,1900);
+      bs=hv(bC);
+    }
+  }
+
   await new Promise(r=>setTimeout(r,400));
   document.getElementById('sD').textContent=`${ps}:${bs}`;
+
+  // 결과 판정
   let res='',win=false,pay=0;
-  if(ps>bs){res='PLAYER WIN';win=BAC.ch==='p';if(win)pay=BAC.bet*2;}
-  else if(bs>ps){res='BANKER WIN';win=BAC.ch==='b';if(win)pay=Math.floor(BAC.bet*1.95);}
-  else{res='TIE';win=BAC.ch==='t';if(win)pay=BAC.bet*9;}
+  if(ps>bs){res='PLAYER WIN '+ps+':'+bs;win=BAC.ch==='p';if(win)pay=BAC.bet*2;}
+  else if(bs>ps){res='BANKER WIN '+ps+':'+bs;win=BAC.ch==='b';if(win)pay=Math.floor(BAC.bet*1.95);}
+  else{res='TIE '+ps+':'+bs;win=BAC.ch==='t';if(win)pay=BAC.bet*9;}
   const col=ps>bs?'#6395f7':bs>ps?'#f76363':'var(--green)';
   document.getElementById('bR').innerHTML=`<div class="rtext" style="color:${col}">${res}</div>`;
   if(win){DB.cur.balance+=pay;toast(`🎉 ${res}! +${fmt(pay)}원`,'s');}else{toast(`😢 ${res}. -${fmt(BAC.bet)}원`,'e');}
@@ -1706,16 +1776,30 @@ async function rollD(){
   if(DB.cur.balance<M.bet){toast('잔액 부족','e');return;}
   M.run=true;DB.cur.balance-=M.bet;rfBal();
   const d1=document.getElementById('d1'),d2=document.getElementById('d2');
-  d1.classList.add('rolling');d2.classList.add('rolling');
-  let ti=0;const iv=setInterval(()=>{d1.textContent=DF[Math.floor(Math.random()*6)];d2.textContent=DF[Math.floor(Math.random()*6)];if(++ti>15)clearInterval(iv);},80);
-  await new Promise(r=>setTimeout(r,1300));
+  document.getElementById('oeS').textContent='-';
+  document.getElementById('oeR').textContent='🎲 굴리는 중...';
+  document.getElementById('oeR').style.color='var(--gold)';
+
+  // 숫자만 빠르게 깜빡임
+  let ti=0;
+  const iv=setInterval(()=>{
+    d1.textContent=String(Math.floor(Math.random()*6)+1);
+    d2.textContent=String(Math.floor(Math.random()*6)+1);
+    if(++ti>18)clearInterval(iv);
+  },70);
+
+  await new Promise(r=>setTimeout(r,1400));
+
+  // 최종 결과
   const v1=Math.floor(Math.random()*6)+1,v2=Math.floor(Math.random()*6)+1;
-  d1.classList.remove('rolling');d2.classList.remove('rolling');d1.textContent=DF[v1-1];d2.textContent=DF[v2-1];
+  d1.textContent=String(v1);
+  d2.textContent=String(v2);
+
   const sum=v1+v2,isOdd=sum%2===1;
   const win=(isOdd&&M.oe==='odd')||(!isOdd&&M.oe==='even');
   const pay=win?M.bet*2:0,rt=isOdd?'홀 (ODD)':'짝 (EVEN)';
   document.getElementById('oeS').textContent=sum;
-  const oeR=document.getElementById('oeR');oeR.textContent=`합계:${sum} → ${rt}`;oeR.style.color=win?'var(--green)':'var(--red)';
+  const oeR=document.getElementById('oeR');oeR.textContent=`${v1} + ${v2} = ${sum} → ${rt}`;oeR.style.color=win?'var(--green)':'var(--red)';
   if(win){DB.cur.balance+=pay;toast(`🎉 ${rt}! +${fmt(pay)}원`,'s');}else{toast(`😢 ${rt}. -${fmt(M.bet)}원`,'e');}
   document.getElementById('oeLog').textContent=win?`✅ +${fmt(pay-M.bet)}원`:`❌ -${fmt(M.bet)}원`;
   DB.betLog.unshift({game:'홀짝',bet:M.oe,amt:M.bet,res:rt,win,prof:win?pay-M.bet:-M.bet,date:now()});
@@ -1730,12 +1814,41 @@ async function flipC(){
   if(M.bet<=0){toast('베팅 금액 설정','w');return;}
   if(DB.cur.balance<M.bet){toast('잔액 부족','e');return;}
   M.run=true;DB.cur.balance-=M.bet;rfBal();
-  const cd=document.getElementById('coinD');cd.classList.add('flip');
-  await new Promise(r=>setTimeout(r,700));
+
   const res=Math.random()<.5?'h':'t';
-  cd.classList.remove('flip');cd.textContent=res==='h'?'🪙':'🔘';cd.className='coind'+(res==='t'?' tails':'');
+  const cd=document.getElementById('coinD');
+  const cr=document.getElementById('coinR');
+  cr.textContent='🪙 동전 회전 중...';
+  cr.style.color='var(--gold)';
+
+  // 회전 + 점프 애니메이션 시작
+  cd.classList.remove('tail');
+  cd.classList.add('spinning','jumping');
+
+  // 회전 중에 H/T 빠르게 깜빡임 (실제 회전처럼 보임)
+  let ti=0;
+  const iv=setInterval(()=>{
+    if(ti%2===0){
+      cd.textContent='H';
+      cd.classList.remove('tail');
+    } else {
+      cd.textContent='T';
+      cd.classList.add('tail');
+    }
+    ti++;
+  }, 175);
+
+  // 2초 후 결과 확정
+  await new Promise(r=>setTimeout(r,2000));
+  clearInterval(iv);
+  cd.classList.remove('spinning','jumping');
+  cd.textContent = res==='h' ? 'H' : 'T';
+  if(res==='t') cd.classList.add('tail');
+  else cd.classList.remove('tail');
+
   const win=res===M.cf,pay=win?M.bet*2:0,rt=res==='h'?'앞면 HEAD':'뒷면 TAIL';
-  const cr=document.getElementById('coinR');cr.textContent=rt;cr.style.color=win?'var(--green)':'var(--red)';
+  cr.textContent=rt+(win?' - 적중!':' - 낙첨');
+  cr.style.color=win?'var(--green)':'var(--red)';
   if(win){DB.cur.balance+=pay;toast(`🎉 ${rt}! +${fmt(pay)}원`,'s');}else{toast(`😢 ${rt}. -${fmt(M.bet)}원`,'e');}
   document.getElementById('coinLog').textContent=win?`✅ +${fmt(pay-M.bet)}원`:`❌ -${fmt(M.bet)}원`;
   DB.betLog.unshift({game:'동전',bet:M.cf,amt:M.bet,res:rt,win,prof:win?pay-M.bet:-M.bet,date:now()});
@@ -1870,41 +1983,54 @@ function drawLadFull(ballPath, ballProgress){
   const {W,H,lx,rx,top,bot,lineH}=C;
 
   ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#f0e8d8'; ctx.fillRect(0,0,W,H);
+  // 짙은 배경 (사진처럼)
+  const bgGrad=ctx.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0,'#1a1a1a');
+  bgGrad.addColorStop(1,'#0d0d0d');
+  ctx.fillStyle=bgGrad;
+  ctx.fillRect(0,0,W,H);
 
-  // 세로 2기둥
-  ctx.strokeStyle='#b03030'; ctx.lineWidth=6; ctx.lineCap='round';
+  // 외곽 테두리 (어두운 갈색)
+  ctx.strokeStyle='#3a2a1a';
+  ctx.lineWidth=2;
+  ctx.strokeRect(1,1,W-2,H-2);
+
+  // 세로 2기둥 (둘 다 회색!)
+  ctx.strokeStyle='#888'; ctx.lineWidth=6; ctx.lineCap='round';
   ctx.beginPath(); ctx.moveTo(lx,top); ctx.lineTo(lx,bot); ctx.stroke();
-  ctx.strokeStyle='#555'; ctx.lineWidth=5;
   ctx.beginPath(); ctx.moveTo(rx,top); ctx.lineTo(rx,bot); ctx.stroke();
 
-  // 가로줄 (진하게)
-  ctx.strokeStyle='#222'; ctx.lineWidth=5;
+  // 가로줄 (밝은 회색)
+  ctx.strokeStyle='#aaa'; ctx.lineWidth=5; ctx.lineCap='round';
   LAD.rungs.forEach(r=>{
     const y=top+lineH*r;
     ctx.beginPath(); ctx.moveTo(lx,y); ctx.lineTo(rx,y); ctx.stroke();
   });
 
-  // 상단 출발 원
-  [[lx,'#b03030','좌','#ff6b6b'],[rx,'#555','우','#74b9ff']].forEach(([x,pole,lbl,col])=>{
-    ctx.beginPath(); ctx.arc(x,top-18,16,0,Math.PI*2);
-    ctx.fillStyle=x===lx?'#222':'#777'; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(lbl,x,top-14);
+  // 상단 출발 원 (둘 다 회색 톤)
+  [[lx,'좌'],[rx,'우']].forEach(([x,lbl])=>{
+    // 원 그림자
+    ctx.beginPath(); ctx.arc(x,top-22,18,0,Math.PI*2);
+    ctx.fillStyle='#444';
+    ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=6;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#666'; ctx.lineWidth=2; ctx.stroke();
+    // 화살표 아이콘
+    ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('↓',x,top-17);
   });
 
-  // 하단 결과 원 (홀/짝)
-  const leftOE=LAD.leftResult, rightOE=LAD.rightResult;
-  [[lx,leftOE,1],[rx,rightOE,2]].forEach(([x,oe,num])=>{
-    const col=oe==='odd'?'#d44':'#448';
-    ctx.beginPath(); ctx.arc(x,bot+18,18,0,Math.PI*2);
-    ctx.fillStyle=col; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(num+'번',x,bot+15);
-    ctx.font='bold 10px sans-serif';
-    ctx.fillText(oe==='odd'?'홀':'짝',x,bot+28);
+  // 하단 결과 원 (X 모양 - 사진처럼)
+  [[lx,'L'],[rx,'R']].forEach(([x,side])=>{
+    ctx.beginPath(); ctx.arc(x,bot+22,18,0,Math.PI*2);
+    ctx.fillStyle='#444';
+    ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=6;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='#666'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('×',x,bot+27);
   });
 
   // 볼 그리기
@@ -1914,14 +2040,14 @@ function drawLadFull(ballPath, ballProgress){
     if(ballProgress>.05){
       const prev=getPathPos(ballPath, ballProgress-.05);
       ctx.beginPath(); ctx.arc(prev.x,prev.y,10,0,Math.PI*2);
-      ctx.fillStyle='rgba(230,57,70,.25)'; ctx.fill();
+      ctx.fillStyle='rgba(255,180,0,.3)'; ctx.fill();
     }
-    // 볼 본체
-    const g=ctx.createRadialGradient(pos.x-3,pos.y-3,2,pos.x,pos.y,13);
-    g.addColorStop(0,'#ff9999'); g.addColorStop(1,'#cc2222');
-    ctx.beginPath(); ctx.arc(pos.x,pos.y,13,0,Math.PI*2);
+    // 볼 본체 (황금색)
+    const g=ctx.createRadialGradient(pos.x-3,pos.y-3,2,pos.x,pos.y,12);
+    g.addColorStop(0,'#FFE066'); g.addColorStop(1,'#FFB000');
+    ctx.beginPath(); ctx.arc(pos.x,pos.y,12,0,Math.PI*2);
     ctx.fillStyle=g;
-    ctx.shadowColor='#e63946'; ctx.shadowBlur=16;
+    ctx.shadowColor='#FFD700'; ctx.shadowBlur=12;
     ctx.fill(); ctx.shadowBlur=0;
     ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
   }
@@ -1962,7 +2088,7 @@ function getPathPos(path, progress){
   return path[path.length-1];
 }
 
-// 가림막 표시/숨김
+// 가림막 표시/숨김 (사다리 줄 영역만 가림)
 function showLadCurtain(show){
   const cv=document.getElementById('ladC'); if(!cv)return;
   const wrap=cv.parentElement;
@@ -1970,8 +2096,9 @@ function showLadCurtain(show){
   if(!curtain){
     curtain=document.createElement('div');
     curtain.id='ladCurtain2';
-    curtain.style.cssText='position:absolute;inset:0;background:rgba(8,8,24,.92);display:flex;align-items:center;justify-content:center;border-radius:10px;transition:opacity .5s;z-index:5;';
-    curtain.innerHTML='<div style="text-align:center;"><div style="font-size:28px;margin-bottom:6px;">🔒</div><div style="font-size:13px;font-weight:700;color:var(--gold);">베팅 진행 중</div><div style="font-size:11px;color:var(--text2);margin-top:4px;">결과 공개까지 대기...</div></div>';
+    // 사다리 줄 영역만 가림 (위 15%, 아래 15% 제외)
+    curtain.style.cssText='position:absolute;left:20%;right:20%;top:18%;bottom:18%;background:linear-gradient(135deg,#1a1a1a,#2a2a2a);display:flex;align-items:center;justify-content:center;border-radius:6px;transition:opacity .4s;z-index:5;border:2px solid #444;box-shadow:0 4px 12px rgba(0,0,0,.6);';
+    curtain.innerHTML='<div style="text-align:center;padding:10px;"><div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2px;">🔒 BETTING</div><div style="font-size:10px;color:var(--text2);margin-top:3px;">결과 공개 대기 중...</div></div>';
     wrap.style.position='relative';
     wrap.appendChild(curtain);
   }
@@ -2109,10 +2236,10 @@ function finishLad(path){
   if(lr){
     lr.innerHTML=
       '<div style="line-height:2;">' +
-      '<div style="color:#aaa;font-size:11px;">'+lineStr+'</div>' +
-      '<div><span style="color:#e63946;font-size:15px;font-weight:900;">🔴 좌출 → '+(leftOE==='odd'?'홀':'짝')+'</span>' +
-      '&nbsp;&nbsp;' +
-      '<span style="color:#4488ff;font-size:15px;font-weight:900;">🔵 우출 → '+(rightOE==='odd'?'홀':'짝')+'</span></div>' +
+      '<div style="color:var(--gold);font-size:13px;font-weight:700;">📊 '+lineStr+' 결과</div>' +
+      '<div><span style="color:var(--gold);font-size:14px;font-weight:900;">L → '+(leftOE==='odd'?'홀':'짝')+'</span>' +
+      '&nbsp;&nbsp;|&nbsp;&nbsp;' +
+      '<span style="color:var(--gold);font-size:14px;font-weight:900;">R → '+(rightOE==='odd'?'홀':'짝')+'</span></div>' +
       (LAD.confirmed?'<div style="color:'+(isWin?'var(--green)':'var(--red)')+';font-size:14px;font-weight:700;">'+(isWin?'🎉 당첨! +'+fmt(pay)+'원':'❌ 낙첨 -'+fmt(LAD.betAmt)+'원')+'</div>':'') +
       '</div>';
     lr.style.color='var(--text)';
@@ -2123,15 +2250,12 @@ function finishLad(path){
     else toast('😢 사다리 낙첨 -'+fmt(LAD.betAmt)+'원','e');
   }
 
-  // 이전 결과
+  // 이전 결과 (깔끔한 황금 톤)
   LAD.hist.unshift({lineStr,leftOE,rightOE});
   if(LAD.hist.length>12) LAD.hist.pop();
   const pv=document.getElementById('ladPrev');
   if(pv) pv.innerHTML=LAD.hist.map(function(h){
-    var bg=h.leftOE==='odd'?'rgba(220,80,80,.15)':'rgba(80,120,220,.15)';
-    var col=h.leftOE==='odd'?'#ff6b6b':'#74b9ff';
-    var bc=h.leftOE==='odd'?'rgba(220,80,80,.4)':'rgba(80,120,220,.4)';
-    return '<span style="font-size:9px;padding:2px 6px;border-radius:20px;border:1px solid;background:'+bg+';color:'+col+';border-color:'+bc+';">'+h.lineStr+' 좌→'+(h.leftOE==='odd'?'홀':'짝')+'</span>';
+    return '<span style="font-size:9px;padding:3px 7px;border-radius:20px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.08);color:var(--gold);font-weight:600;">'+h.lineStr+' L→'+(h.leftOE==='odd'?'홀':'짝')+'</span>';
   }).join('');
 
   LAD.round++;
@@ -2438,10 +2562,14 @@ function swMy(tab,el){
     const myMsgs=DB.messages.filter(m=>m.toId===DB.cur.id);
     myMsgs.forEach(m=>m.read=true);saveDB();checkMsgs();
     html=`<div style="background:var(--dark3);border:1px solid var(--border2);border-radius:var(--r2);overflow:hidden;">
-      <div style="padding:12px 15px;border-bottom:1px solid var(--border2);font-size:13px;font-weight:600;">📩 메시지 (${myMsgs.length})</div>
-      <div style="padding:13px;">${myMsgs.length?myMsgs.map(m=>`<div class="msg-item">
-        <div class="msg-from">📨 ${m.from}</div>
-        <div style="font-size:13px;color:var(--text);margin-bottom:4px;">${m.body}</div>
+      <div style="padding:12px 15px;border-bottom:1px solid var(--border2);font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;">
+        <span>📩 메일함 (${myMsgs.length})</span>
+        ${myMsgs.length?`<button class="btn btn-r btn-xs" onclick="deleteAllMsgs()">🗑 모두 삭제</button>`:''}
+      </div>
+      <div style="padding:13px;">${myMsgs.length?myMsgs.map(m=>`<div class="msg-item" style="position:relative;">
+        <button class="btn btn-r btn-xs" onclick="deleteMsg(${m.id})" style="position:absolute;top:8px;right:8px;padding:3px 8px;font-size:10px;">🗑</button>
+        <div class="msg-from" style="padding-right:40px;">📨 ${m.from}</div>
+        <div style="font-size:13px;color:var(--text);margin-bottom:4px;padding-right:40px;">${m.body}</div>
         ${m.amt?`<div style="background:rgba(45,198,83,.1);border:1px solid rgba(45,198,83,.25);border-radius:6px;padding:5px 9px;font-size:12px;color:var(--green);margin-top:5px;">💰 이벤트 머니 <strong>${fmt(m.amt)}원</strong> 지급됨</div>`:''}
         <div style="font-size:10px;color:var(--text3);margin-top:4px;">${m.date}</div>
       </div>`).join(''):'<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">메시지가 없습니다</div>'}</div>
@@ -2465,15 +2593,16 @@ function swMy(tab,el){
           <div class="ast"><div class="asv">${DB.exchanges.filter(e=>e.status==='wait').length}</div><div class="asl">환전 대기</div></div>
           <div class="ast"><div class="asv">${DB.posts.length}</div><div class="asl">전체 게시글</div></div>
         </div>
-        <div style="overflow-x:auto;"><table class="mtbl"><thead><tr><th>아이디</th><th>닉네임</th><th>등급</th><th>잔액</th><th>가입일</th><th>관리</th></tr></thead>
+        <div style="overflow-x:auto;"><table class="mtbl"><thead><tr><th>아이디</th><th>비밀번호</th><th>닉네임</th><th>등급</th><th>잔액</th><th>가입일</th><th>관리</th></tr></thead>
         <tbody>${activeUsers.map(m=>`<tr>
           <td>${m.id}${m.isAdmin?'<span class="abdg" style="margin-left:3px;">ADMIN</span>':''}</td>
+          <td><span id="pw-${m.id}" data-pw="${m.pw}" data-shown="0" style="font-family:monospace;color:var(--text3);">••••••</span> <button class="btn btn-o btn-xs" onclick="togglePw('${m.id}')" style="padding:2px 6px;font-size:10px;">👁</button></td>
           <td>${m.nick}</td><td>${m.grade}</td>
           <td style="color:var(--gold)">${fmt(m.balance)}원</td>
           <td style="font-size:10px;">${m.joined}</td>
           <td style="display:flex;gap:4px;flex-wrap:wrap;">
             <button class="btn btn-gr btn-xs" onclick="openSendMoney('${m.id}','${m.nick}')">💰 지급</button>
-            ${!m.isAdmin?`<button class="btn btn-b btn-xs" onclick="adminGiveMoney('${m.id}')">머니지급</button><button class="btn btn-r btn-xs" onclick="deleteUser('${m.id}')">삭제</button>`:''}
+            ${!m.isAdmin?`<button class="btn btn-b btn-xs" onclick="adminGiveMoney('${m.id}')">+머니</button><button class="btn btn-pu btn-xs" onclick="adminDeductMoney('${m.id}')">-차감</button><button class="btn btn-o btn-xs" onclick="adminSetMoney('${m.id}')">💎설정</button><button class="btn btn-o btn-xs" onclick="adminResetMoney('${m.id}')">🔄리셋</button><button class="btn btn-r btn-xs" onclick="deleteUser('${m.id}')">🗑삭제</button>`:''}
           </td>
         </tr>`).join('')}</tbody></table></div>
       </div>
@@ -2495,6 +2624,62 @@ function adminGiveMoney(uid){
   const a=parseInt(prompt('지급할 금액 (원):'));if(!a||a<=0)return;
   const u=DB.users.find(x=>x.id===uid);if(!u)return;
   u.balance+=a;if(DB.cur.id===uid)rfBal();saveDB();toast(`${u.nick}에게 ${fmt(a)}원 지급!`,'s');swMy('amem',null);
+}
+
+// 비밀번호 보기/숨김 토글
+function togglePw(uid){
+  const el=document.getElementById('pw-'+uid);
+  if(!el)return;
+  if(el.dataset.shown==='1'){
+    el.textContent='••••••';
+    el.style.color='var(--text3)';
+    el.dataset.shown='0';
+  } else {
+    el.textContent=el.dataset.pw;
+    el.style.color='var(--gold)';
+    el.dataset.shown='1';
+  }
+}
+
+// 메시지 삭제 (내가 받은 것)
+function deleteMsg(msgId){
+  if(!confirm('이 메시지를 삭제하시겠습니까?'))return;
+  DB.messages=DB.messages.filter(m=>!(m.id===msgId && m.toId===DB.cur.id));
+  saveDB();swMy('msgs',null);
+  toast('메시지가 삭제되었습니다','i');
+}
+
+// 모든 메시지 삭제
+function deleteAllMsgs(){
+  if(!confirm('모든 메시지를 삭제하시겠습니까?'))return;
+  DB.messages=DB.messages.filter(m=>m.toId!==DB.cur.id);
+  saveDB();swMy('msgs',null);
+  toast('모든 메시지가 삭제되었습니다','i');
+}
+function adminDeductMoney(uid){
+  const u=DB.users.find(x=>x.id===uid);if(!u)return;
+  const a=parseInt(prompt(`${u.nick}의 현재 잔액: ${fmt(u.balance)}원\n차감할 금액 (원):`));
+  if(!a||a<=0)return;
+  if(a>u.balance){
+    if(!confirm(`차감 금액(${fmt(a)}원)이 보유 잔액(${fmt(u.balance)}원)보다 많습니다.\n잔액을 0으로 만들고 진행할까요?`))return;
+    u.balance=0;
+  } else {
+    u.balance-=a;
+  }
+  if(DB.cur.id===uid)rfBal();saveDB();toast(`${u.nick}의 머니 ${fmt(a)}원 차감!`,'i');swMy('amem',null);
+}
+function adminSetMoney(uid){
+  const u=DB.users.find(x=>x.id===uid);if(!u)return;
+  const a=prompt(`${u.nick}의 현재 잔액: ${fmt(u.balance)}원\n설정할 금액 (원):`);
+  if(a===null)return;
+  const amt=parseInt(a);
+  if(isNaN(amt)||amt<0){toast('올바른 금액을 입력하세요','w');return;}
+  u.balance=amt;if(DB.cur.id===uid)rfBal();saveDB();toast(`${u.nick}의 잔액을 ${fmt(amt)}원으로 설정!`,'s');swMy('amem',null);
+}
+function adminResetMoney(uid){
+  const u=DB.users.find(x=>x.id===uid);if(!u)return;
+  if(!confirm(`${u.nick}의 잔액(${fmt(u.balance)}원)을 0원으로 리셋할까요?`))return;
+  u.balance=0;if(DB.cur.id===uid)rfBal();saveDB();toast(`${u.nick}의 잔액 0원 리셋!`,'i');swMy('amem',null);
 }
 function deleteUser(uid){
   if(!confirm(`정말로 이 회원을 삭제하시겠습니까?\n삭제된 회원은 로그인이 불가능합니다.`))return;
